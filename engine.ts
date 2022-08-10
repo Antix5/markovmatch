@@ -136,7 +136,7 @@ function main(): void {
         "Hedgehog", "Squirrel", "Mouse", "Rat", "Hamster",
         "Guinea Pig", "Parrot", "Raccoon", "Puppy", "Kitten"]);
 
-    console.log(engine.findBestMatch("chick"));
+    console.log(engine.findBestMatch("The cat is sleeping"));
 
     
 }
