@@ -1,12 +1,12 @@
 # Markovmatch
 
-#### An algorithm for approximate string matching using inpired by [Markov chains](https://en.wikipedia.org/wiki/Markov_chain)
+#### An algorithm for approximate string matching inspired by [Markov chains](https://en.wikipedia.org/wiki/Markov_chain) / Graph theory.
 
 ## Why is it important ?
 
 Approximate string matching is a very common problem in computer science (for text suggestions, spell checking, etc.) and is a very important subject for data processing. For exemple, two database can have the same datas but with slightly different spelling.
 
-Finding efficent algorithms for approximate string matching is not easy a common one is [Levenshtein distance](https://en.wikipedia.org/wiki/Levenshtein_distance).
+Finding efficent algorithms for approximate string matching is not easy. A common one is [Levenshtein distance](https://en.wikipedia.org/wiki/Levenshtein_distance).
 
 In this small article we will explore an other approach inspired by automatic text generation allowing for a blazingly fast approximate string matching.
 (We will also talk about the limitations and possible solutions)
@@ -23,7 +23,7 @@ In a markov chain, the prediction regarding the next event is based solely on th
 
 The character routine is the following :
 
-- In the morning he wake up at A and go to B
+- In the morning they wake up at A and go to B
 - From B, our character go to C
 - They forgot something at home and go back to A to get it
 - They remember that they also forgot something at C
@@ -65,6 +65,8 @@ The matrix is symetric because all node are bidirectional in this graph.
 
 The Markovmatch algorithm work in the following way :
 
+The first steps : 
+
 - We take a string (exemple : "Hello world")
 - We create an unnormalized (1) adjacency matrix from this string
 
@@ -89,7 +91,8 @@ l((l))-->d((d));
 
 Matrix :
 
-With the character set : H, e, l, o, space, w, r, d
+Here we use the character set : H, e, l, o, space, w, r, d; This character set is only for desmonstation purpose.
+We will usually use the extended lowercase latin alphabet.
 
 $$
 \begin{bmatrix}
@@ -107,7 +110,7 @@ $$
 
 #### (1) Have you noticed something strange ?
 
-This matrix is not normalised (sum of probabilities > 1 :scream: ). Normalisation is very important with transition matrices when we use them in the usual setting of a Markov chain. Here we don't normalise the matrix because we want to limit the number of possible matching words linked to this matrix, **we are not working with probabilities but quantities**.
+This matrix is not normalised (sum of "probabilities" > 1 :scream: ). Normalisation is very important with transition matrices when we use them in the usual setting of a Markov chain. Here we don't normalise the matrix because we want to limit the number of possible matching words linked to this matrix, **we are not working with probabilities but quantities**.
 
 #### What do I mean by limiting the matching words ?
 
@@ -170,7 +173,7 @@ $$
     
 ```
 
-Several words can give the same graph, therefore there is no isomorphism between the set of words (+starting letter) and the set of adjacency matrix.
+Several words can give the same graph, therefore there is **no** isomorphism between the set of strings (+starting letter) and the set of adjacency matrix.
 
 #### Is this a problem ?
 
@@ -240,13 +243,13 @@ $$ ||X|| = \sum_{i=0, j=0}^{dim(X)} |X_{i,j}| = 0 \Leftrightarrow X=0_V $$
 
 4. The norm is positive valued because it's a sum of absolute values
 
-This is not a usual [Matrix norm](https://en.wikipedia.org/wiki/Matrix_norm) but a [Frobenius norm](https://en.wikipedia.org/wiki/Frobenius_norm). This norm has been chosen because the computational cost is really low.
+This is not a usual [Matrix norm](https://en.wikipedia.org/wiki/Matrix_norm) but a "Entry-wise" norm. This norm has been chosen because the computational cost is really low.
 
-The distance we will use is therefore the distance induced by the Frobenius norm.
+The distance we will use is therefore the distance induced by this norm.
 
-$$d(X,Y)=||Y-X||_{2,2}$$
+$$d(X,Y)=||Y-X||_{1,1}$$
 
-##### We are reaching the core of the algorithm, now let's resume the math.
+##### We are reaching the core of the algorithm, now let's summarise the maths.
 
 As explained above, a graph can correspond to a set of strings. 
 
@@ -258,16 +261,155 @@ Therefore it's impossible to talk about the distance between two strings (due to
 
 We are in something called a [pseudo-metric space](https://en.wikipedia.org/wiki/Pseudo-metric_space) with $d(S_1,S_2)$ the pseudo-distance between two strings.
 
-As explained earlier that's not really a problem due to the type of problem we are dealing with.
+As explained earlier that's not really a problem due to the type of object we are dealing with.
 
-Now, let's resume the algorithm in 2 steps :
+Now, let's summerise the algorithm in 2 steps :
 
-1. We compute each string matrix (with a given alphabet shared for both conversion)
+1. We compute each string's matrix (with a given alphabet shared for both conversion)
 
-2. We compute the distance between each string matrix using the Frobenius norm
+2. We compute the distance between each string matrix using the norm we defined earlier.
 
 **Here it is !**
 
-#### Now it's time to test it, how does it compare with common algorithms used int the field ?
+#### Now it's time to test it, how does it compare with common algorithms used in the field ?
 
-We are going to analyse the following metrics : Speed and accuracy.
+We are going to analyse the following metrics to do the tests : Speed and accuracy.
+
+Naive testing on the hotel dataset :
+
+
+Sample of results :
+
+|Initial name| guessed match | real match|
+|-----------|-------------------|----------------|
+|Deluxe Room, 1 King Bed|deluxe king room|Deluxe King Room|
+|Standard Room, 1 King Bed, Accessible|standard king room|Standard King Roll-in Shower Accessible|
+|Grand Corner King Room, 1 King Bed|grand corner king room|Grand Corner King Room|
+|Suite, 1 King Bed (Parlor)|king parlor suite|King Parlor Suite|
+|High-Floor Premium Room, 1 King Bed|high-floor premium king room|High-Floor Premium King Room|
+|Traditional Double Room, 2 Double Beds|double room with two double beds|Double Room with Two Double Beds|
+|Room, 1 King Bed, Accessible|king room|King Room - Disability Access|
+|Deluxe Room, 1 King Bed|deluxe king room|Deluxe King Room|
+|Deluxe Room|deluxe king room|Deluxe Double Room|
+|Room, 2 Double Beds (19th to 25th Floors)|two double beds - location room (19th to 25th floors)|Two Double Beds - Location Room (19th to 25th Floors)|
+|Room, 1 King Bed (19th to 25 Floors)|king bed - location room (19th to 25th floors)|King Bed - Location Room (19th to 25th Floors)|
+|Deluxe Room|deluxe king room|Deluxe Double Room|
+|Junior Suite, 1 King Bed with Sofa Bed|deluxe king suite with sofa bed|Junior Suite|
+|Signature Room, 2 Queen Beds|signature two queen|Signature Two Queen|
+|Signature Room, 1 King Bed|signature king|Signature One King|
+|Premium Room, 2 Queen Beds|queen room|Premium Two Queen|
+|Studio, 1 King Bed with Sofa bed, Corner|corner king studio|Corner King Studio|
+|Club Room, 2 Queen Beds|queen room|Club Queen Room With Two Queen Beds and Free Wi-Fi|
+|Club Room, 1 King Bed|king room|Club King Room With Free Wi-Fi|
+|Club Room, Premium 2 Queen Beds|club premium two queen|Club Premium Two Queen|
+|Suite, 1 Bedroom|one bedroom suite|One - Bedroom Suite|
+
+**Accuracy : 58.3%**
+
+Even if the algorithm is not perfect, it's still a good start. This task is really difficult, a lot of the same vocabulary being used each time. Beside that it's important to remember that it's the naive algorithm that we are testing. Some result are showed multiple time. We will see later how we can solve that problem.
+
+But let's see with naive Levenshtein, how does it compare ?
+
+Sample of results :
+
+
+|Initial name| guessed match | real match|
+|-----------|-------------------|----------------|
+|Deluxe Room, 1 King Bed|deluxe room - one king bed|Deluxe King Room|
+|Standard Room, 1 King Bed, Accessible|standard king roll-in shower accessible|Standard King Roll-in Shower Accessible|
+|Grand Corner King Room, 1 King Bed|grand corner king room|Grand Corner King Room|
+|Suite, 1 King Bed (Parlor)|business king room|King Parlor Suite|
+|High-Floor Premium Room, 1 King Bed|high-floor premium king room|High-Floor Premium King Room|
+|Traditional Double Room, 2 Double Beds|business double room with two double beds|Double Room with Two Double Beds|
+|Room, 1 King Bed, Accessible|gold king suite|King Room - Disability Access|
+|Deluxe Room, 1 King Bed|deluxe room - one king bed|Deluxe King Room|
+|Deluxe Room|queen room|Deluxe Double Room|
+|Room, 2 Double Beds (19th to 25th Floors)|king bed - location room (19th to 25th floors)|Two Double Beds - Location Room (19th to 25th Floors)|
+|Room, 1 King Bed (19th to 25 Floors)|king bed - location room (19th to 25th floors)|King Bed - Location Room (19th to 25th Floors)|
+|Deluxe Room|queen room|Deluxe Double Room|
+|Junior Suite, 1 King Bed with Sofa Bed|deluxe king suite with sofa bed|Junior Suite|
+|Signature Room, 2 Queen Beds|signature two queen|Signature Two Queen|
+|Signature Room, 1 King Bed|signature one king|Signature One King|
+|Premium Room, 2 Queen Beds|premium two queen|Premium Two Queen|
+|Studio, 1 King Bed with Sofa bed, Corner|deluxe king suite with sofa bed|Corner King Studio|
+|Club Room, 2 Queen Beds|deluxe room - two queen beds|Club Queen Room With Two Queen Beds and Free Wi-Fi|
+|Club Room, 1 King Bed|club one king|Club King Room With Free Wi-Fi|
+|Club Room, Premium 2 Queen Beds|club premium two queen|Club Premium Two Queen|
+|Suite, 1 Bedroom|queen room|One - Bedroom Suite|
+|Deluxe Room, City View|queen room with city view|Deluxe King Or Queen Room|
+|Deluxe Room, Lake View|deluxe double room|Deluxe King Or Queen Room with Lake View|
+|Club Room, City View (Club Lounge Access for 2 guests)|double room with two double beds|Club Level King Or Queen Room with City View|
+|Club Room, Lake View (Club Lounge Access for 2 guests)|double room with two double beds|Club Level King Or Queen Room with Water View|
+|Deluxe Room, 1 King Bed|deluxe room - one king bed|Deluxe King Room|
+|Deluxe Room, 2 Queen Beds|deluxe room - two queen beds|Deluxe Room - Two Queen Beds|
+|Premier Room, 1 King Bed (Royal Club)|deluxe room (non refundable)|Royal Club Premier Room - One King Bed|
+|Room, 2 Double Beds, Non Smoking|deluxe double room|Double Room with Two Double Beds|
+|Room, 1 King Bed, Non Smoking (LEISURE)|city view with one king bed|King Room|
+|Executive Room, 1 King Bed, Non Smoking|executive king room|Executive King Room|
+|Suite, 1 King Bed, Non Smoking|signature one king|King Suite|
+|Room, 1 Queen Bed, Non Smoking (Fairmont Room)|grand corner king room|Queen Room|
+|Luxury Room, 1 Queen Bed, Non Smoking|luxury double room|Luxury Queen|
+|Luxury Room, 1 King Bed, Non Smoking|deluxe room - one king bed|Luxury King|
+|Luxury Room, 2 Double Beds, Non Smoking|luxury double room|Luxury Double Room|
+|Deluxe Room, 1 King Bed, Non Smoking|deluxe room - one king bed|Deluxe King Room|
+|Signature Room, 2 Double Beds, Non Smoking|signature one king|Signature Double|
+|Signature Room, 1 King Bed, Non Smoking|signature one king|Signature King|
+|Fairmont Gold, Suite, 1 King Bed, Non Smoking|grand corner king room|Gold King Suite|
+|Room, 1 King Bed, Non Smoking, Business Lounge Access (Fairmont Gold)|one king or two queens - ocean front|Business King Room - Exclusive access to Gold Floor Lounge|
+|Room, 1 King Bed|premier king room|King Room|
+|Double Room|queen room|Double Room with Two Double Beds|
+|Business Plan, 1 King Bed|business king room|Business King Room|
+|Room, 1 Queen Bed, City View|room with city view|Queen Room With City View|
+|Business Double Room, 2 Double Beds|business double room with two double beds|Business Double Room With Two Double Beds|
+|Room, 2 Queen Beds, City View|room with city view|Queen Room With Two Queen Beds and City View|
+|Deluxe Suite|deluxe suite|Deluxe Suite|
+|Room, 1 Queen Bed, Accessible, Bathtub|premium queen room with free wi-fi|Queen Room - Disability Access|
+|Room, 1 King Bed|premier king room|King Room|
+|Room, 2 Double Beds|deluxe double room|Double Room with Two Double Beds|
+|King Room, Suite, 1 King Bed with Sofa bed|deluxe king suite with sofa bed|Deluxe King Suite With Sofa Bed|
+|Deluxe Suite, 1 King Bed, Non Smoking, Kitchen|deluxe room - one king bed|Deluxe King Suite With Kitchenette|
+|Deluxe Room, 1 King Bed|deluxe room - one king bed|Deluxe King Room|
+|Premier Room, 1 King Bed|deluxe room - one king bed|Premier King Room|
+|Premier Twin Room|premier king room|Premier Queen Room With Two Queen Beds|
+|Suite, 1 Bedroom|queen room|One - Bedroom Suite|
+|Deluxe Suite, 1 Bedroom|deluxe king room|Deluxe One - Bedroom Suite|
+|Classic Room, 1 King Bed|classic king room|Classic King Room|
+|Luxury Room, 2 Queen Beds (Prestige)|deluxe room - two queen beds|Luxury Queen Room With Two Queen Beds|
+|Signature Suite, 1 Bedroom|signature two queen|One-Bedroom Suite|
+|Traditional Room, 1 King Bed|deluxe room - one king bed|Standard King Room|
+|Room, 1 Queen Bed|luxury queen|Standard Queen Room With One Queen Bed|
+|Room, Accessible|king suite|Queen Room - Disability Access|
+|Deluxe Room, 1 Queen Bed (High Floor)|deluxe room - one king bed|Deluxe Queen Room - High Floor With Free Wi-Fi|
+|Premium Room, 1 King Bed|premium two queen|Premium King Room With Free Wi-Fi|
+|Premium Room, 1 Queen Bed|premium two queen|Premium Queen Room With Free Wi-Fi|
+|Room, 1 King Bed, Pool View|king room with pool view|King Room With Pool View|
+|Room, 2 Queen Beds, Garden View|room with ocean view|Queen Room With Two Queen Beds and Garden View|
+|Club Room, 1 King Bed|club one king|Club King Room With Free Wi-Fi|
+|Club Room, 2 Queen Beds|deluxe room - two queen beds|Club Queen Room With Two Queen Beds and Free Wi-Fi|
+|Standard Room, Mountain View (Scenic)|standard room with mountain view|Standard Room With Mountain View|
+|Standard Room, Lagoon View|standard room dolphin lagoon view|Standard Room Dolphin Lagoon View|
+|Standard Room, Ocean View|standard room with ocean view|Standard Room With Ocean View|
+
+[Source for the implementation of Levenshtein Distance algorithm in typescript used for this test](https://gist.github.com/keesey/e09d0af833476385b9ee13b6d26a2b84)
+
+**Accuracy: 24.2%** :scream: 
+
+Naive levenshtein distance algorithm scores even worst. I said that wasn't an easy problem to solve.
+
+##### What can we do now to improve the accuracy for this specific task?
+
+The two columns should have a one to one match, therefore, a result cannot be one name in one column for two different names in the other column.
+
+What we are trying to solve here is called in computer science the assignment problem.
+
+For the purpose of this article we will use a polynomial time algorithm to solve this problem called the [Hungarian algorithm](https://en.wikipedia.org/wiki/Hungarian_algorithm).
+
+
+![Assignment problem](https://upload.wikimedia.org/wikipedia/commons/3/3f/Problème_d%27affectation.png)
+
+
+
+
+
+
+

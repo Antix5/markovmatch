@@ -1,8 +1,11 @@
+import {
+    parse as parseCsv
+  } from 'https://deno.land/std@0.82.0/encoding/csv.ts';
 
 class Engine {
 
     private possiblewords: string[] = [];
-    private charSet: string = "abcdefghijklmnopqrstuvwxyz- éèàçâêîôûäëïöü.,;:!?()[]{}";
+    private charSet: string = "abcdefghijklmnopqrstuvwxyz- éèàçâêîôûäëïöü.,;:!?()[]{}1234567890";
     private markovList: MarkovChain[] = [];
 
     constructor(words: string[]) {
@@ -21,7 +24,51 @@ class Engine {
         return new MarkovChain(text, this.charSet);
     }
 
-    public findBestMatch(text: string): any[] {
+    private levenshtein(a: string, b: string): number
+    {
+        const an = a ? a.length : 0;
+        const bn = b ? b.length : 0;
+        if (an === 0)
+        {
+            return bn;
+        }
+        if (bn === 0)
+        {
+            return an;
+        }
+        const matrix = new Array<number[]>(bn + 1);
+        for (let i = 0; i <= bn; ++i)
+        {
+            let row = matrix[i] = new Array<number>(an + 1);
+            row[0] = i;
+        }
+        const firstRow = matrix[0];
+        for (let j = 1; j <= an; ++j)
+        {
+            firstRow[j] = j;
+        }
+        for (let i = 1; i <= bn; ++i)
+        {
+            for (let j = 1; j <= an; ++j)
+            {
+                if (b.charAt(i - 1) === a.charAt(j - 1))
+                {
+                    matrix[i][j] = matrix[i - 1][j - 1];
+                }
+                else
+                {
+                    matrix[i][j] = Math.min(
+                        matrix[i - 1][j - 1], // substitution
+                        matrix[i][j - 1], // insertion
+                        matrix[i - 1][j] // deletion
+                    ) + 1;
+                }
+            }
+        }
+        return matrix[bn][an];
+    }
+
+    public findBestMatch(text: string): any {
 
         let markovifiedText = this.markovify(text.toLowerCase());
 
@@ -41,11 +88,36 @@ class Engine {
             bestMatches.push(markov.getText());
         });
 
-        return bestMatches;
+        return bestMatches[0];
         
 
    
     }
+
+    public findBestLevenshtein(text: string): any {
+
+        // We compute the Levenshtein distance between the text and all the possible words
+
+        let levenshteinDict: {[key: string]: number} = {};
+
+        for (let i = 0; i < this.possiblewords.length; i++) {
+
+            levenshteinDict[this.possiblewords[i]] = this.levenshtein(text, this.possiblewords[i]);
+
+        }
+
+        // We sort the list of of words by their distance to the text
+
+        let rankedMatches = Object.keys(levenshteinDict).sort((a, b) => {
+            return levenshteinDict[a] - levenshteinDict[b];
+        });
+
+        return rankedMatches[0];
+        
+
+    }
+
+        
 
 
 }
@@ -126,17 +198,92 @@ class MarkovChain{
 
 }
 
-function main(): void {
-    let engine = new Engine(
-        ["Cat","Dog", "Zebra", "Lion", "Tiger", "Elephant",
-        "Giraffe", "Hippopotamus", "Cheetah", "Crocodile",
-        "Panda", "Koala", "Lemur", "Kangaroo", "Horse",
-        "Cow", "Pig", "Sheep", "Chicken", "Duck", "Goose",
-        "Penguin", "Polar Bear", "Ostrich", "Rabbit", "Deer",
-        "Hedgehog", "Squirrel", "Mouse", "Rat", "Hamster",
-        "Guinea Pig", "Parrot", "Raccoon", "Puppy", "Kitten"]);
+async function main(){
 
-    console.log(engine.findBestMatch("The cat is sleeping"));
+
+    let firstcolumn : string[] = [];
+    let secondcolumn : string[] = [];
+
+    const f = await parseCsv(await Deno.readTextFile('room_type.csv'));
+
+    // We romove the first row (header)
+    f.shift();
+
+    for await (const row of f) {
+        firstcolumn.push(row[0]);
+        secondcolumn.push(row[1]);
+    }
+
+    // We create a dictionary with the control results
+
+    let controlDict: {[key: string]: string} = {};
+
+    for (let i = 0; i < firstcolumn.length; i++) {
+        controlDict[firstcolumn[i]] = secondcolumn[i];
+    }
+
+
+    let engine = new Engine(secondcolumn);
+
+    let testResult = {} as any;
+
+    for (let i = 0; i < firstcolumn.length; i++) {
+        testResult[firstcolumn[i]] = engine.findBestMatch(firstcolumn[i]);
+    }
+
+    console.log(testResult);
+
+    console.log("Control : ");
+    console.log(controlDict);
+
+    // We compare the results with the control results
+
+    let success: number = 0;
+
+    console.log("------------------------------");
+    for (let i = 0; i < firstcolumn.length; i++) {
+        console.log("|" + firstcolumn[i] + "|" + testResult[firstcolumn[i]] + "|" + controlDict[firstcolumn[i]] + "|");
+        if (testResult[firstcolumn[i]] == controlDict[firstcolumn[i]].toLowerCase()) {
+            
+            success++;
+        }
+    }
+    console.log("------------------------------");
+
+    console.log("Success rate : " + success / firstcolumn.length);
+
+    console.log("------------------------------");
+
+    // Same thing for the Levenshtein distance
+
+    let levenshteinDict: {[key: string]: string} = {};
+
+    for (let i = 0; i < firstcolumn.length; i++) {
+        levenshteinDict[firstcolumn[i]] = engine.findBestLevenshtein(firstcolumn[i]);
+    }   
+
+    console.log("------------------------------");
+
+    let levenshteinSuccess: number = 0;
+
+    for (let i = 0; i < firstcolumn.length; i++) {
+
+        console.log("|" + firstcolumn[i] + "|" + levenshteinDict[firstcolumn[i]] + "|" + controlDict[firstcolumn[i]] + "|");
+        if (levenshteinDict[firstcolumn[i]] == controlDict[firstcolumn[i]].toLowerCase()) {
+            levenshteinSuccess++;
+        }
+    }
+
+    console.log("------------------------------");
+
+    console.log("Success rate : " + levenshteinSuccess / firstcolumn.length);
+
+    console.log("------------------------------");
+
+    
+
+
+
 
     
 }
