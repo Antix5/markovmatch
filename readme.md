@@ -97,7 +97,7 @@ We will usually use the extended lowercase latin alphabet.
 
 $$
 \begin{bmatrix}
-    & H & e & l & o & \_ & w & r & d \\
+    \_  & H & e & l & o & \_ & w & r & d \\
     H & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\
     e & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 \\
     l & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 1 \\
