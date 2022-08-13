@@ -1,6 +1,6 @@
 # Markovmatch
 
-#### An algorithm for approximate string matching inspired by [Markov chains](https://en.wikipedia.org/wiki/Markov_chain) / Graph theory.
+#### An algorithm for approximate string matching inspired by [Markov chains](https://en.wikipedia.org/wiki/Markov_chain) / Graph theory
 
 ## Why is it important ?
 
@@ -49,7 +49,6 @@ Where 1/2 is the probability of the event.
 Every graph can me matched with something called a transition matrix (also known as adjacency matrix. The contrary is not always true, there exist a non injective and non surjective mapping between the class of n-noded directional connected graphs and the class of $n \times n$ matrix).
 The one for the markov chain just above is the following :
 
-
 $$
 \begin{bmatrix}
    & a & b & c \\
@@ -65,7 +64,7 @@ The matrix is symetric because all node are bidirectional in this graph.
 
 The Markovmatch algorithm work in the following way :
 
-The first steps : 
+The first steps :
 
 - We take a string (exemple : "Hello world")
 - We create an unnormalized (1) adjacency matrix from this string
@@ -118,7 +117,7 @@ Markov chaines use probabilities to predict the next event, here we use the adja
 
 By counting the double link in the matrix (when > 1) we have additional information that are not available in a normalised transition matrix.
 
-**Here is an exemple :** 
+**Here is an exemple :**
 
 We have this graph
 
@@ -204,7 +203,7 @@ A distance is defined in the following way :
 
 $$ d(X,Y) = ||X-Y|| $$
 
-##### Defintion of the norm we are going to use :
+##### Defintion of the norm we are going to use
 
 $$ ||X|| = \sum_{i=0, j=0}^{dim(X)} |X_{i,j}| $$
 
@@ -213,7 +212,6 @@ We check if this is a valid norm :
 1. We check the triangle inequality :
 
 $$ || X + Y || \leq ||X|| + ||Y|| $$
-
 
 $$ ||X + Y|| = \sum_{i=0, j=0}^{dim(X)} |X_{i,j} + Y_{i,j}| $$
 
@@ -249,9 +247,9 @@ The distance we will use is therefore the distance induced by this norm.
 
 $$d(X,Y)=||Y-X||_{1,1}$$
 
-##### We are reaching the core of the algorithm, now let's summarise the maths.
+##### We are reaching the core of the algorithm, now let's summarise the maths
 
-As explained above, a graph can correspond to a set of strings. 
+As explained above, a graph can correspond to a set of strings.
 
 Let $G$ be a graph and $S$ be a string and $f(S)$ be a function that takes a string and returns a graph.
 
@@ -276,7 +274,6 @@ Now, let's summerise the algorithm in 2 steps :
 We are going to analyse the following metrics to do the tests : Speed and accuracy.
 
 Naive testing on the hotel dataset :
-
 
 Sample of results :
 
@@ -311,7 +308,6 @@ Even if the algorithm is not perfect, it's still a good start. This task is real
 But let's see with naive Levenshtein, how does it compare ?
 
 Sample of results :
-
 
 |Initial name| guessed match | real match|
 |-----------|-------------------|----------------|
@@ -348,51 +344,11 @@ Sample of results :
 |Executive Room, 1 King Bed, Non Smoking|executive king room|Executive King Room|
 |Suite, 1 King Bed, Non Smoking|signature one king|King Suite|
 |Room, 1 Queen Bed, Non Smoking (Fairmont Room)|grand corner king room|Queen Room|
-|Luxury Room, 1 Queen Bed, Non Smoking|luxury double room|Luxury Queen|
-|Luxury Room, 1 King Bed, Non Smoking|deluxe room - one king bed|Luxury King|
-|Luxury Room, 2 Double Beds, Non Smoking|luxury double room|Luxury Double Room|
-|Deluxe Room, 1 King Bed, Non Smoking|deluxe room - one king bed|Deluxe King Room|
-|Signature Room, 2 Double Beds, Non Smoking|signature one king|Signature Double|
-|Signature Room, 1 King Bed, Non Smoking|signature one king|Signature King|
-|Fairmont Gold, Suite, 1 King Bed, Non Smoking|grand corner king room|Gold King Suite|
-|Room, 1 King Bed, Non Smoking, Business Lounge Access (Fairmont Gold)|one king or two queens - ocean front|Business King Room - Exclusive access to Gold Floor Lounge|
-|Room, 1 King Bed|premier king room|King Room|
-|Double Room|queen room|Double Room with Two Double Beds|
-|Business Plan, 1 King Bed|business king room|Business King Room|
-|Room, 1 Queen Bed, City View|room with city view|Queen Room With City View|
-|Business Double Room, 2 Double Beds|business double room with two double beds|Business Double Room With Two Double Beds|
-|Room, 2 Queen Beds, City View|room with city view|Queen Room With Two Queen Beds and City View|
-|Deluxe Suite|deluxe suite|Deluxe Suite|
-|Room, 1 Queen Bed, Accessible, Bathtub|premium queen room with free wi-fi|Queen Room - Disability Access|
-|Room, 1 King Bed|premier king room|King Room|
-|Room, 2 Double Beds|deluxe double room|Double Room with Two Double Beds|
-|King Room, Suite, 1 King Bed with Sofa bed|deluxe king suite with sofa bed|Deluxe King Suite With Sofa Bed|
-|Deluxe Suite, 1 King Bed, Non Smoking, Kitchen|deluxe room - one king bed|Deluxe King Suite With Kitchenette|
-|Deluxe Room, 1 King Bed|deluxe room - one king bed|Deluxe King Room|
-|Premier Room, 1 King Bed|deluxe room - one king bed|Premier King Room|
-|Premier Twin Room|premier king room|Premier Queen Room With Two Queen Beds|
-|Suite, 1 Bedroom|queen room|One - Bedroom Suite|
-|Deluxe Suite, 1 Bedroom|deluxe king room|Deluxe One - Bedroom Suite|
-|Classic Room, 1 King Bed|classic king room|Classic King Room|
-|Luxury Room, 2 Queen Beds (Prestige)|deluxe room - two queen beds|Luxury Queen Room With Two Queen Beds|
-|Signature Suite, 1 Bedroom|signature two queen|One-Bedroom Suite|
-|Traditional Room, 1 King Bed|deluxe room - one king bed|Standard King Room|
-|Room, 1 Queen Bed|luxury queen|Standard Queen Room With One Queen Bed|
-|Room, Accessible|king suite|Queen Room - Disability Access|
-|Deluxe Room, 1 Queen Bed (High Floor)|deluxe room - one king bed|Deluxe Queen Room - High Floor With Free Wi-Fi|
-|Premium Room, 1 King Bed|premium two queen|Premium King Room With Free Wi-Fi|
-|Premium Room, 1 Queen Bed|premium two queen|Premium Queen Room With Free Wi-Fi|
-|Room, 1 King Bed, Pool View|king room with pool view|King Room With Pool View|
-|Room, 2 Queen Beds, Garden View|room with ocean view|Queen Room With Two Queen Beds and Garden View|
-|Club Room, 1 King Bed|club one king|Club King Room With Free Wi-Fi|
-|Club Room, 2 Queen Beds|deluxe room - two queen beds|Club Queen Room With Two Queen Beds and Free Wi-Fi|
-|Standard Room, Mountain View (Scenic)|standard room with mountain view|Standard Room With Mountain View|
-|Standard Room, Lagoon View|standard room dolphin lagoon view|Standard Room Dolphin Lagoon View|
-|Standard Room, Ocean View|standard room with ocean view|Standard Room With Ocean View|
+
 
 [Source for the implementation of Levenshtein Distance algorithm in typescript used for this test](https://gist.github.com/keesey/e09d0af833476385b9ee13b6d26a2b84)
 
-**Accuracy: 24.2%** :scream: 
+**Accuracy: 24.2%** :scream:
 
 Naive levenshtein distance algorithm scores even worst. I said that wasn't an easy problem to solve.
 
@@ -404,12 +360,33 @@ What we are trying to solve here is called in computer science the assignment pr
 
 For the purpose of this article we will use a polynomial time algorithm to solve this problem called the [Hungarian algorithm](https://en.wikipedia.org/wiki/Hungarian_algorithm).
 
+![Assignment problem](https://upload.wikimedia.org/wikipedia/commons/3/3f/Problème_d%27affeectation_%28algorithme_hungarien%29.svg)
 
-![Assignment problem](https://upload.wikimedia.org/wikipedia/commons/3/3f/Problème_d%27affectation.png)
+Here is the result, the success rate is now of 86.4% :scream:
 
+This is a sharp improvement over the naive algorithm.
 
+Levendshtein will not be tested again for this task due to the fact that the algorithm is not the best suited for this task anyway. Under the hood, the levenshtein algorithm works by counting the action needed to go from a string to an other and therefore for flexible text like the one with the names of the hotels, it can perform quite poorly.
 
+But is our algorithm the best suited for all tasks? 
 
+Not really. Due to the fact the algorithm works using letter combinations pattern it's possible to have horrible results if we cherrypick the dataset.
 
+for exemple :
+
+We have a dataset with names of individual :
+
+Joseph
+Mary
+John
+Matthew
+Robert
+Aaron
+
+If we forget half the letter during the spelling, ex Jsef to find Joseph will will have result that are much worse than levenshtein.
+
+An impovment that could be done is to add other letter in the adjacency matrix that match with possible spelling mistakes.
+
+"eph" from Joseph could be encoded in the matrix by the addition of sequences e -> p -> h with a higher weight and e -> f with a lower weight.
 
 

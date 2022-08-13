@@ -2,6 +2,14 @@ import {
     parse as parseCsv
   } from 'https://deno.land/std@0.82.0/encoding/csv.ts';
 
+import { createRequire } from 'https://deno.land/std/node/module.ts';
+
+const require = createRequire(import.meta.url);
+  
+var munkres = require('munkres-js');
+// github repo -> https://github.com/addaleax/munkres-js/blob/master/munkres.js
+  
+
 class Engine {
 
     private possiblewords: string[] = [];
@@ -117,7 +125,133 @@ class Engine {
 
     }
 
+    public stringMatcher(listOfStrings: string[]): string[][] {
+
+        // 1. Step, we match each string to an id (in a hashmap)
+
+        let idsList1: Map<string, number> = new Map();
+
+        for (let i = 0; i < listOfStrings.length; i++) {
+            idsList1.set(listOfStrings[i], i);
+        }
+
+        // Same thing with possible words
+
+        let idsList2: Map<string, number> = new Map();
+
+        for (let i = 0; i < this.possiblewords.length; i++) {
+            idsList2.set(this.possiblewords[i], i);
+        }
+
+        // I inverse the hashmap to have the id as key and the string as value
+
+        let idsList1Inverse = new Map();
+
+        idsList1.forEach((value, key) => {
+            idsList1Inverse.set(value, key);
+        } );
+
+        let idsList2Inverse = new Map();
+
+        idsList2.forEach((value, key) => {
+            idsList2Inverse.set(value, key);
+
+        } );
+
+        /*
+
+        For each string in idsList1, we add the list of best matches to the hashmap
+
+        */
+
+        let bestMatches: Map<string, any[]> = new Map();
+
+        idsList1.forEach((value, key) => {
+           
+            bestMatches.set(key, this.findBestMatch(key));
+        });
+
+        // Using bestMatches, we create a matrix of distances between strings
+
+        let matrix: number[][] = [];
+
+        /*
+
+        {
+
+            "string1": [
+                ["stringbis1", distance],
+                ["stringbis2", distance],
+                ["stringbis3", distance]
+                ...
+            ],
+            "string2": [
+                ["stringbis1", distance],
+                ["stringbis2", distance],
+                ["stringbis3", distance]
+                ...
+            ],
+
+            string# are stored in idsList1
+            stringbis# are stored in idsList2
+
+            We need to convert this hashmap to a matrix of distances between strings
+
+            (this is not levenshtein distance, that will come later)
+
+        */
+
+        for (let i = 0; i < listOfStrings.length; i++) {
+            matrix[i] = [];
+            for (let j = 0; j < this.possiblewords.length; j++) {
+                matrix[i][j] = 0;
+            }
+        }
+
+        for (let matchToString of bestMatches) {
+
+            let indexOfString = idsList1.get(matchToString[0]);
+
+            // We check if it's not undefined
+
+            if (indexOfString !== undefined) {
+
+                for (let match of matchToString[1]) {
+                    let indexOfMatch = idsList2.get(match[0]);
+
+                    if(indexOfMatch !== undefined){
+                        matrix[indexOfString][indexOfMatch] = match[1];
+                    }
+                }
+
+            }
+            
+        }
+
+        // We apply munkres algorithm to the matrix
         
+        let results : number[][] = munkres(matrix);
+
+        console.log(results);
+
+        return results.map((ids) => {
+
+            let firstListId = ids[0];
+            let secondListId = ids[1];
+
+            // We look for which id match which string
+
+            let firstListString = idsList1Inverse.get(firstListId);
+            let secondListString = idsList2Inverse.get(secondListId);
+
+            return [firstListString, secondListString];
+
+        });
+        
+
+
+    }
+
 
 
 }
@@ -131,7 +265,7 @@ class MarkovChain{
     private mainMatrix: number[][];
     private charSet: string;
     private text: string;
-    private grade: number;
+    private grade: number = 0;
 
     constructor(text: string, charset: string) {
 
@@ -204,7 +338,7 @@ async function main(){
     let firstcolumn : string[] = [];
     let secondcolumn : string[] = [];
 
-    const f = await parseCsv(await Deno.readTextFile('room_type.csv'));
+    const f : any = await parseCsv(await Deno.readTextFile('room_type.csv'));
 
     // We romove the first row (header)
     f.shift();
@@ -280,7 +414,42 @@ async function main(){
 
     console.log("------------------------------");
 
-    
+
+    // We match the strings with the stringMatcher
+
+    let result = engine.stringMatcher(firstcolumn);
+
+    /*
+
+    result is an array of arrays of strings.
+
+    [
+        ["string from list 1", "string from list 2"],
+        ["string from list 1", "string from list 2"],
+        ...
+        
+    ]
+
+
+    */
+
+    console.log(result);
+
+    console.log("------------------------------");
+
+    let stringMatcherSuccess: number = 0;
+
+    for (let i = 0; i < firstcolumn.length; i++) {
+
+        console.log("|" + firstcolumn[i] + "|" + result[i][1] + "|" + controlDict[firstcolumn[i]] + "|");
+        if (result[i][1] == controlDict[firstcolumn[i]].toLowerCase()) {
+            stringMatcherSuccess++;
+        }
+    }
+
+    console.log("------------------------------");
+
+    console.log("Success rate : " + stringMatcherSuccess / firstcolumn.length);
 
 
 
