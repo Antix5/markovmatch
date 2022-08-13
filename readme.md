@@ -96,12 +96,12 @@ Here we use the character set : H, e, l, o, space, w, r, d; This character set i
 We will usually use the extended lowercase latin alphabet.
 
 $$\begin{bmatrix}
-    \_  & H & e & l & o & \_ & w & r & d \\
+      & H & e & l & o &  & w & r & d \\
     H & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\
     e & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 \\
     l & 0 & 0 & 1 & 1 & 0 & 0 & 0 & 1 \\
     o & 0 & 0 & 0 & 0 & 1 & 0 & 1 & 0 \\
-    \_ & 0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 \\
+     & 0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 \\
     w & 0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 \\
     r & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 \\
     d & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
