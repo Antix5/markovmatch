@@ -1,4 +1,4 @@
-# Markovmatch
+# Approximate string matching, a deeper look into the bigram method
 
 #### An algorithm for approximate string matching inspired by [Markov chains](https://en.wikipedia.org/wiki/Markov_chain) / Graph theory
 
@@ -10,6 +10,8 @@ Finding efficent algorithms for approximate string matching is not easy. A commo
 
 In this small article we will explore an other approach inspired by automatic text generation allowing for a blazingly fast approximate string matching.
 (We will also talk about the limitations and possible solutions)
+
+The method used in the presentation is equivalent to the bigram method. This method is widely used in string matching engines. Here we will explore it but from an other perspective (allowing for a faster algorithm that what could be done naively).
 
 ## Introduction to Markov chains
 
@@ -46,7 +48,7 @@ B -- 1/2 -->A;
 
 Where 1/2 is the probability of the event.
 
-Every graph can me matched with something called a transition matrix (also known as adjacency matrix. The contrary is not always true, there exist a non injective and non surjective mapping between the class of n-noded directional connected graphs and the class of $n \times n$ matrix).
+Every graph can me matched with something called a transition matrix (also known as adjacency matrix. The contrary is not always true, there exist a non injective and non surjective mapping between the class of n-noded directed graphs and the class of $n \times n$ matrix).
 The one for the markov chain just above is the following :
 
 $$
@@ -58,11 +60,11 @@ $$
 \end{bmatrix}
 $$
 
-The matrix is symetric because all node are bidirectional in this graph.
+The matrix is symetric because all connections are bidirectional in this graph.
 
 ## How does the algorithm work ?
 
-The Markovmatch algorithm work in the following way :
+The algorithm work in the following way :
 
 The first steps :
 
@@ -90,7 +92,7 @@ l((l))-->d((d));
 
 Matrix :
 
-Here we use the character set : H, e, l, o, space, w, r, d; This character set is only for desmonstation purpose.
+Here we use the character set : H, e, l, o, space, w, r, d; This character set is only for demonstration purpose.
 We will usually use the extended lowercase latin alphabet.
 
 $$
@@ -136,7 +138,7 @@ We have this graph
       a((a))-->g((g));
 ```
 
-We start from the letter "h", let's see all the possible word we can build by going only one time by each edge of the graph.
+We start from the letter "h", let's see all the possible word we can build by only going through each edge of the graph one time.
 
 Matrix :
 
@@ -215,7 +217,7 @@ $$ || X + Y || \leq ||X|| + ||Y|| $$
 
 $$ ||X + Y|| = \sum_{i=0, j=0}^{dim(X)} |X_{i,j} + Y_{i,j}| $$
 
-We know that : $ |X_{i,j} + Y_{i,j}| \leq |X_{i,j}| + |Y_{i,j}|$
+We know that : $|X_{i,j} + Y_{i,j}| \leq |X_{i,j}| + |Y_{i,j}|$
 
 Therefore :
 
@@ -229,7 +231,7 @@ We verfied the triangle inequality
 
 2. We verify the homogeneity of the norm
 
-the norm is homogeneous if and only if $ ||\lambda . X || = | \lambda | . ||X||$
+the norm is homogeneous if and only if $||\lambda . X || = | \lambda | . ||X||$
 
 let's prove it,
 
@@ -239,7 +241,7 @@ $$ || \lambda . X || = \sum_{i=0,j=0}^{dim(X)} |\lambda . X_{i,j}| = |\lambda| \
 
 $$ ||X|| = \sum_{i=0, j=0}^{dim(X)} |X_{i,j}| = 0 \Leftrightarrow X=0_V $$
 
-4. The norm is positive valued because it's a sum of absolute values
+1. The norm is positive because it's a sum of absolute values
 
 This is not a usual [Matrix norm](https://en.wikipedia.org/wiki/Matrix_norm) but a "Entry-wise" norm. This norm has been chosen because the computational cost is really low.
 
@@ -257,7 +259,7 @@ $f$ is neither surjective nor injective.
 
 Therefore it's impossible to talk about the distance between two strings (due to the fact that several strings can give the same graph and therefore different string can have a distance of 0).
 
-We are in something called a [pseudo-metric space](https://en.wikipedia.org/wiki/Pseudo-metric_space) with $d(S_1,S_2)$ the pseudo-distance between two strings.
+We are dealing with something called a [pseudo-metric space](https://en.wikipedia.org/wiki/Pseudo-metric_space) with $d(S_1,S_2)$ the pseudo-distance between two strings.
 
 As explained earlier that's not really a problem due to the type of object we are dealing with.
 
@@ -265,13 +267,13 @@ Now, let's summerise the algorithm in 2 steps :
 
 1. We compute each string's matrix (with a given alphabet shared for both conversion)
 
-2. We compute the distance between each string matrix using the norm we defined earlier.
+2. We compute the distance between each string's matrix using the norm we defined earlier.
 
 **Here it is !**
 
-#### Now it's time to test it, how does it compare with common algorithms used in the field ?
+#### Now it's time to test it, how does it compare with a common algorithm used in the field ?
 
-We are going to analyse the following metrics to do the tests : Speed and accuracy.
+We are going to analyse the following metrics: Speed and accuracy.
 
 Naive testing on the hotel dataset :
 
@@ -345,34 +347,33 @@ Sample of results :
 |Suite, 1 King Bed, Non Smoking|signature one king|King Suite|
 |Room, 1 Queen Bed, Non Smoking (Fairmont Room)|grand corner king room|Queen Room|
 
-
 [Source for the implementation of Levenshtein Distance algorithm in typescript used for this test](https://gist.github.com/keesey/e09d0af833476385b9ee13b6d26a2b84)
 
 **Accuracy: 24.2%** :scream:
 
 Naive levenshtein distance algorithm scores even worst. I said that wasn't an easy problem to solve.
 
+(We will see later why this specific algorithm scored that badly)
+
 ##### What can we do now to improve the accuracy for this specific task?
 
-The two columns should have a one to one match, therefore, a result cannot be one name in one column for two different names in the other column.
+The two columns should have a one to one matches, therefore, a result cannot be one name in one column for two different names in the other column.
 
 What we are trying to solve here is called in computer science the assignment problem.
 
 For the purpose of this article we will use a polynomial time algorithm to solve this problem called the [Hungarian algorithm](https://en.wikipedia.org/wiki/Hungarian_algorithm).
 
-![Assignment problem](https://upload.wikimedia.org/wikipedia/commons/3/3f/Problème_d%27affeectation_%28algorithme_hungarien%29.svg)
-
-Here is the result, the success rate is now of 86.4% :scream:
+*Here is the result, the success rate is now of **86.4%** :scream:*
 
 This is a sharp improvement over the naive algorithm.
 
-Levendshtein will not be tested again for this task due to the fact that the algorithm is not the best suited for this task anyway. Under the hood, the levenshtein algorithm works by counting the action needed to go from a string to an other and therefore for flexible text like the one with the names of the hotels, it can perform quite poorly.
+Levenshtein will not be tested again for this task due to the fact that the algorithm is not the best suited for this task anyway. Under the hood, the levenshtein algorithm works by counting the action needed to go from a string to an other and therefore for flexible text like the one with the names of the hotels, it can perform quite poorly.
 
-But is our algorithm the best suited for all tasks? 
+But is our algorithm the best suited for all tasks?
 
 Not really. Due to the fact the algorithm works using letter combinations pattern it's possible to have horrible results if we cherrypick the dataset.
 
-for exemple :
+For exemple :
 
 We have a dataset with names of individual :
 
@@ -383,10 +384,90 @@ Matthew
 Robert
 Aaron
 
-If we forget half the letter during the spelling, ex Jsef to find Joseph will will have result that are much worse than levenshtein.
+If we forget half the letter during the spelling, ex Jsef to find Joseph we will have result that are much worse than levenshtein.
 
 An impovment that could be done is to add other letter in the adjacency matrix that match with possible spelling mistakes.
 
 "eph" from Joseph could be encoded in the matrix by the addition of sequences e -> p -> h with a higher weight and e -> f with a lower weight.
 
+#### Conclusion regarding the quality of the algorithm
 
+The algorithm is quite good at finding the best match, even with string with a lot of modifications but some spelling that would be detected by levenshtein will not be identified correctly with this one (although, modification could be made to improve the efficiency in that case).
+
+#### Now, let's talk about the speed of the algorithm
+
+Due to the lack of huge datasets, to have a good idea of the string matching on a large scale I will focus on the complexity of the algorithm and an approximate exemple on the search part.
+
+The algorithm has a complexity for comparation of O(n). This is due to the fact that the algorithm is doing a substraction over the entire dataset. So the time is proportional to the number of matrix to substract (even if in fact the values will be stored in a vector).
+
+The speed can be further improved by limiting the max weight in the matrix to 1 and storing the matrix as a list of boolean (even if this will reduce the efficiency).
+
+We will suppose that we limit ourselve to a set of 66 characters : "abcdefghijklmnopqrstuvwxyz- éèàçâêîôûäëïöü.,;:!?()[]{}1234567890"
+
+So here the list of boolean will be of size 66^2 = 4356.
+
+After that we can apply a XOR operation to the list and count the number of True values.
+
+Exemple in Rust :
+
+```Rust
+
+use rand;
+
+fn main(){
+
+    // We generate a random dataset of size 1000 (vectors of 4356 boolean values)
+
+    let mut dataset = Vec::new();
+    for _ in 0..100000 {
+        let mut vector = Vec::new();
+        for _ in 0..4356 {
+            vector.push(rand::random::<bool>());
+        }
+        dataset.push(vector);
+    }
+
+    let firstelement = &dataset[0];
+
+    // We measure the time it takes to execute the following code
+
+    let start = std::time::Instant::now();
+
+    let error : Vec<u16> = dataset.iter().map(|x| compare_fingerprints(x, &firstelement)).collect();
+
+    let end = std::time::Instant::now();
+
+    let duration = end.duration_since(start);
+
+    println!("{:?}", duration);
+
+}
+
+fn compare_fingerprints(fingerprint1: &[bool], fingerprint2: &[bool]) -> u16 {
+    let mut count = 0;
+    for i in 0..fingerprint1.len() {
+        if fingerprint1[i] ^ fingerprint2[i] {
+            count += 1;
+        }
+    }
+    count
+}
+
+```
+
+To give an idea, this code takes about 78.8245ms to check the 100000 lines of the dataset with the code just above.
+This job could also be done in parallel which would allow to reduce the time even more.
+
+### Conclusion
+
+This modified bigram method is an efficient method to find close matches in a dataset while limiting computation time.
+Although there is still some room for improvement and this method should not be chosen in total disregard of the use case.
+
+This method also works very well with other algorithm like the Hungarian algorithm if we need to match the values with an other dataset.
+
+##### Thanks for reading this article.
+You can find the code on [Github](https://github.com/Antix5/markovmatch) and find me on [LinkedIn](https://www.linkedin.com/in/antoine-demangeon/)
+
+The Hotel Room dataset has been created by [Susan Li](https://www.linkedin.com/in/susanli/) and the dataset can be found on [Kaggle](https://www.kaggle.com/datasets/leandrodoze/room-type)
+
+Source for the Hungarian algorithm implementation : [Github](https://github.com/addaleax/munkres-js) (this is a very complicated algorithm to implement so if you want to experiment with it, that should be very useful)
