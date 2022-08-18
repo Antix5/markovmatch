@@ -203,45 +203,10 @@ A distance is defined in the following way :
 
 $$ d(X,Y) = ||X-Y|| $$
 
-##### Defintion of the norm we are going to use
+The [Matrix norm](https://en.wikipedia.org/wiki/Matrix_norm) we are going to use is an "Entry-wise" norm. This norm has been chosen because the computational cost is really low.
+(The demo is available in the [Github repository](https://github.com/Antix5/markovmatch/blob/master/normdemo.md))
 
-$$ ||X|| = \sum_{i=0, j=0}^{dim(X)} |X_{i,j}| $$
-
-We check if this is a valid norm :
-
-1. We check the triangle inequality :
-
-$$ || X + Y || \leq ||X|| + ||Y|| $$
-
-$$ ||X + Y|| = \sum_{i=0, j=0}^{dim(X)} |X_{i,j} + Y_{i,j}| $$
-
-We know that : $|X_{i,j} + Y_{i,j}| \leq |X_{i,j}| + |Y_{i,j}|$
-
-Therefore :
-
-$$ ||X + Y|| \leq \sum_{i=0, j=0}^{dim(X)} |X_{i,j}| + |Y_{i,j}| $$
-
-$$ \Leftrightarrow $$
-
-$$ ||X + Y|| \leq \sum_{i=0, j=0}^{dim(X)} |X_{i,j}| + \sum_{i=0}^{dim(X)} |Y_{i,j}|$$
-
-We verfied the triangle inequality
-
-2. We verify the homogeneity of the norm
-
-the norm is homogeneous if and only if $||\lambda . X || = | \lambda | . ||X||$
-
-let's prove it,
-
-$$ || \lambda . X || = \sum_{i=0,j=0}^{dim(X)} |\lambda . X_{i,j}| = |\lambda| \sum_{i=0,j=0}^{dim(X)} |X_{i,j}| = |\lambda|.||X||$$
-
-3. We verify that $||X|| = 0$ if and only if $X=0_V$
-
-$$ ||X|| = \sum_{i=0, j=0}^{dim(X)} |X_{i,j}| = 0 \Leftrightarrow X=0_V $$
-
-1. The norm is positive because it's a sum of absolute values
-
-This is not a usual [Matrix norm](https://en.wikipedia.org/wiki/Matrix_norm) but a "Entry-wise" norm. This norm has been chosen because the computational cost is really low.
+This norm can also be seen as a different version of the Manhattan norm.
 
 The distance we will use is therefore the distance induced by this norm.
 
@@ -386,7 +351,7 @@ If we forget half the letter during the spelling, ex Jsef to find Joseph we will
 
 An impovment that could be done is to add other letter in the adjacency matrix that match with possible spelling mistakes.
 
-"eph" from Joseph could be encoded in the matrix by the addition of sequences e -> p -> h with a higher weight and e -> f with a lower weight.
+"eph" from Joseph could be encoded in the matrix by the addition of sequences $e \rightarrow p \rightarrow h$ with a higher weight and $e \rightarrow f$ with a lower weight.
 
 #### Conclusion regarding the quality of the algorithm
 
@@ -429,10 +394,15 @@ fn main(){
 
     // We measure the time it takes to execute the following code
 
+
+    // We start the timer
     let start = std::time::Instant::now();
 
+    // We apply the comparison on the entire dataset
     let error : Vec<u16> = dataset.iter().map(|x| compare_fingerprints(x, &firstelement)).collect();
 
+
+    // We stop the timer and display the time elapsed
     let end = std::time::Instant::now();
 
     let duration = end.duration_since(start);
@@ -442,12 +412,17 @@ fn main(){
 }
 
 fn compare_fingerprints(fingerprint1: &[bool], fingerprint2: &[bool]) -> u16 {
+    // We reset the timer to 0
     let mut count = 0;
+
+    // We iterate over the entire list of boolean values
     for i in 0..fingerprint1.len() {
+        // if XOR is true, we increment the count
         if fingerprint1[i] ^ fingerprint2[i] {
             count += 1;
         }
     }
+    // We return the count
     count
 }
 
